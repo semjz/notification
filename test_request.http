@@ -1,0 +1,10 @@
+POST http://localhost:3000/notification
+Content-Type: application/json
+
+{
+  "type": "sms",
+  "recipient": "user@example.com",
+  "subject": "Hello",
+  "message": "This is a test email",
+  "priority": "high"
+}
