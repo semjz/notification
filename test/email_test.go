@@ -22,7 +22,7 @@ func TestEmailSuccessful(t *testing.T) {
 	app := SetUp()
 	jsonBody := []byte(`{
 		"type": "email",
-		"recipient": "user@example.com",
+		"recipient": "Test@gmail.com",
 		"subject": "Test subject",
 		"message": "Test message"
 	}`)
@@ -46,14 +46,13 @@ func TestEmailSuccessful(t *testing.T) {
 	assert.Equal(t, `{"message":"Notification sent"}`, string(body))
 }
 
-func TestEmailWrongPayload(t *testing.T) {
+func TestEmailWrongEmailFormat(t *testing.T) {
 	app := SetUp()
 	jsonBody := []byte(`{
 		"type": "email",
-		"recipient": "user@example.com",
+		"recipient": "user",
 		"subject": "Test subject",
-		"message": "Test message",
-		"extarField"
+		"message": "Test message"
 	}`)
 	payload := bytes.NewReader(jsonBody)
 	req, err := http.NewRequest("POST", "/notification", payload)
@@ -66,11 +65,61 @@ func TestEmailWrongPayload(t *testing.T) {
 
 	res, err := app.Test(req, -1)
 
-	assert.Error(t, err)
+	assert.Equal(t, 400, res.StatusCode)
+
+	body, _ := io.ReadAll(res.Body)
+
+	assert.Contains(t, string(body), "Validation error")
+}
+
+func TestEmailMissingField(t *testing.T) {
+	app := SetUp()
+	jsonBody := []byte(`{
+		"type": "email",
+		"subject": "Test subject",
+		"message": "Test message"
+	}`)
+	payload := bytes.NewReader(jsonBody)
+	req, err := http.NewRequest("POST", "/notification", payload)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := app.Test(req, -1)
 
 	assert.Equal(t, 400, res.StatusCode)
 
 	body, _ := io.ReadAll(res.Body)
 
-	assert.Equal(t, `{"error": "invalid payload"}`, string(body))
+	assert.Contains(t, string(body), "Validation error")
+}
+
+func TestEmailExtraField(t *testing.T) {
+	app := SetUp()
+	jsonBody := []byte(`{
+		"type": "email",
+		"recipient": "user@yahoo.com",
+		"subject": "Test subject",
+		"message": "Test message",
+		"extra": "extra field"
+	}`)
+	payload := bytes.NewReader(jsonBody)
+	req, err := http.NewRequest("POST", "/notification", payload)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := app.Test(req, -1)
+
+	assert.Equal(t, 400, res.StatusCode)
+
+	body, _ := io.ReadAll(res.Body)
+
+	assert.Contains(t, string(body), "Validation error")
 }

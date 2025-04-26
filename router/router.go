@@ -2,7 +2,7 @@ package router
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"notification/handler"
+	"notification/api/handler"
 )
 
 func SetUpRoutes(app *fiber.App) {

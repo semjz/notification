@@ -3,8 +3,7 @@ Content-Type: application/json
 
 {
   "type": "sms",
-  "recipient": "user@example.com",
-  "subject": "Hello",
-  "message": "This is a test email",
-  "priority": "high"
+  "sender": "30007732904278",
+  "recipient": ["+989397226632"],
+  "message": "This is a test sms"
 }
