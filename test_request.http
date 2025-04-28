@@ -3,7 +3,7 @@ Content-Type: application/json
 
 {
   "type": "sms",
-  "sender": "30007732904278",
-  "recipient": ["+989397226632"],
-  "message": "This is a test sms"
+  "lineNumber": "30007732904278",
+  "mobiles": ["+989397226632"],
+  "messageText": "This is a test email"
 }

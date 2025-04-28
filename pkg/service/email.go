@@ -1,14 +1,15 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/resend/resend-go/v2"
+	"notification/config"
 	"notification/domain/notify"
+	"notification/infrastructure/email"
 	"notification/pkg/setup"
 )
 
 type EmailPayload struct {
-	Sender      string   `json:"sender" validate:"required,email"`
 	Recipient   []string `json:"recipient" validate:"required,dive,email"`
 	Subject     string   `json:"subject" validate:"required"`
 	Message     string   `json:"message" validate:"required"`
@@ -16,20 +17,28 @@ type EmailPayload struct {
 	Attachments []string `json:"attachments,omitempty"`
 }
 
-func (e *EmailPayload) GetRecipient() []string {
+func (e EmailPayload) GetRecipient() []string {
 	return e.Recipient
 }
 
-func (e *EmailPayload) GetMessage() string {
+func (e EmailPayload) GetMessage() string {
 	return e.Message
 }
 
-func (e *EmailPayload) GetSubject() string {
-	return e.Subject
+func (e EmailPayload) GetPriority() string {
+	return e.Priority
 }
 
-func (e *EmailPayload) GetPriority() string {
-	return e.Subject
+func (e EmailPayload) GetSubject() string { return e.Subject }
+
+func (e EmailPayload) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]interface{}{
+		"type":      "email",
+		"recipient": e.GetRecipient(),
+		"subject":   e.GetSubject(),
+		"message":   e.GetMessage(),
+		"priority":  e.GetPriority(),
+	})
 }
 
 type EmailNotifier struct{}
@@ -39,18 +48,12 @@ func (en *EmailNotifier) Send(payload notify.NotifyPayload) error {
 	if !ok {
 		return fmt.Errorf("payload does not support sender")
 	}
-	sender := emailPayload.Sender
-	apiKey := "re_6cCDxFbw_34HjduPxRD4jY5W4wtumstCa"
-	client := resend.NewClient(apiKey)
-	params := &resend.SendEmailRequest{
-		From:    sender,
-		To:      emailPayload.GetRecipient(),
-		Subject: emailPayload.GetSubject(),
-		Html:    emailPayload.GetMessage(),
+	SMTPService := email.NewSMTPService(config.GetConfig())
+	err := SMTPService.SendMail(emailPayload.GetRecipient(), emailPayload.Subject, emailPayload.GetMessage())
+	if err != nil {
+		return err
 	}
-
-	_, err := client.Emails.Send(params)
-	return err
+	return nil
 }
 
 func init() {

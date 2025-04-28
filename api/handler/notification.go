@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"notification/infrastructure/rabbitmq"
 	_ "notification/pkg/service"
 	"notification/pkg/setup"
 )
@@ -22,8 +22,7 @@ func SendNotification(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	notifier, factory, err := setup.GetNotifier(meta.Type)
-	fmt.Println(setup.NotifyRegistry)
+	_, factory, err := setup.GetNotifier(meta.Type)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "unsupported notifier " + meta.Type})
 	}
@@ -56,10 +55,7 @@ func SendNotification(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"Validation error": errs})
 	}
 
-	err = notifier.Send(payload)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-	}
+	rabbitmq.SetUpSend(payload)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Notification sent"})
 }

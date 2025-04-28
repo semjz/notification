@@ -10,41 +10,40 @@ import (
 )
 
 type SmsPayload struct {
-	Sender    string   `json:"sender" validate:"required"`
-	Recipient []string `json:"recipient" validate:"required,dive,phonenumber"`
-	Message   string   `json:"message" validate:"required"`
+	Sender    string   `json:"lineNumber" validate:"required"`
+	Recipient []string `json:"mobiles" validate:"required,dive,phonenumber"`
+	Message   string   `json:"messageText" validate:"required"`
 	Priority  string   `json:"priority,omitempty"`
 }
 
-func (s *SmsPayload) GetRecipient() []string {
-	return s.Recipient
-}
+func (s SmsPayload) GetRecipient() []string { return s.Recipient }
 
-func (s *SmsPayload) GetMessage() string {
+func (s SmsPayload) GetMessage() string {
 	return s.Message
 }
 
-func (s *SmsPayload) GetPriority() string {
+func (s SmsPayload) GetPriority() string {
 	return s.Priority
+}
+
+func (s SmsPayload) GetSender() string { return s.Sender }
+
+func (s SmsPayload) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]interface{}{
+		"type":        "sms",
+		"lineNumber":  s.GetSender(),
+		"mobiles":     s.GetRecipient(),
+		"messageText": s.GetMessage(),
+	})
 }
 
 type SmsNotifier struct{}
 
 func (en *SmsNotifier) Send(payload notify.NotifyPayload) error {
 
-	smsPayload, ok := payload.(*SmsPayload)
-	if !ok {
-		return fmt.Errorf("payload does not support sender")
-	}
-
-	sender := smsPayload.Sender
 	url := "https://api.sms.ir/v1/send/bulk"
-	requiredSmsPayload := make(map[string]interface{})
-	requiredSmsPayload["lineNumber"] = sender
-	requiredSmsPayload["messageText"] = smsPayload.GetMessage()
-	requiredSmsPayload["mobiles"] = smsPayload.GetRecipient()
 
-	jsonData, _ := json.Marshal(requiredSmsPayload)
+	jsonData, _ := payload.MarshalJSON()
 	req, err := http.NewRequest("POST", url, bytes.NewReader(jsonData))
 	if err != nil {
 		return err

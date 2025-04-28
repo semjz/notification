@@ -5,7 +5,7 @@ go 1.24
 require (
 	github.com/go-playground/validator/v10 v10.26.0
 	github.com/gofiber/fiber/v2 v2.52.6
-	github.com/resend/resend-go/v2 v2.17.0
+	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/stretchr/testify v1.10.0
 )
 
