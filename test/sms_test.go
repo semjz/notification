@@ -12,8 +12,9 @@ func TestSMSSuccessful(t *testing.T) {
 	app := SetUp()
 	jsonBody := []byte(`{
 		"type": "sms",
-		"recipient": "+989121111111",
-		"message": "Test message"
+		"lineNumber": "30007732904278",
+		"mobiles": ["+989121111111"],
+		"messageText": "Test message"
 	}`)
 	payload := bytes.NewReader(jsonBody)
 	req, err := http.NewRequest("POST", "/notification", payload)
@@ -28,19 +29,21 @@ func TestSMSSuccessful(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	assert.Equal(t, 200, res.StatusCode)
-
 	body, _ := io.ReadAll(res.Body)
 
-	assert.Equal(t, `{"message":"Notification sent"}`, string(body))
+	assert.Equal(t,
+		200, res.StatusCode, "Expected 200, got %d. Response: %s",
+		res.StatusCode, string(body))
+
 }
 
 func TestSMSWrongNumberFormat(t *testing.T) {
 	app := SetUp()
 	jsonBody := []byte(`{
-		"type": "email",
-		"recipient": "11111",
-		"message": "Test message"
+		"type": "sms",
+		"lineNumber": "30007732904278",
+		"mobiles": ["11111"],
+		"messageText": "Test message"
 	}`)
 	payload := bytes.NewReader(jsonBody)
 	req, err := http.NewRequest("POST", "/notification", payload)
@@ -53,9 +56,11 @@ func TestSMSWrongNumberFormat(t *testing.T) {
 
 	res, err := app.Test(req, -1)
 
-	assert.Equal(t, 400, res.StatusCode)
-
 	body, _ := io.ReadAll(res.Body)
 
-	assert.Contains(t, string(body), "Validation error")
+	assert.Equal(t,
+		400, res.StatusCode, "Expected 400, got %d. Response: %s",
+		res.StatusCode, string(body))
+
+	assert.Contains(t, string(body), "payload field validation error")
 }

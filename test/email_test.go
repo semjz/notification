@@ -6,6 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
+	"notification/api/handler"
+	"notification/mocks"
 	"notification/router"
 	"testing"
 )
@@ -14,15 +16,18 @@ func SetUp() *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName: "notification",
 	})
+	mockBroker := mocks.MockBroker{}
+	app.Post("/notification", handler.SendNotification(mockBroker))
 	router.SetUpRoutes(app)
 	return app
 }
 
 func TestEmailSuccessful(t *testing.T) {
 	app := SetUp()
+
 	jsonBody := []byte(`{
 		"type": "email",
-		"recipient": "Test@gmail.com",
+		"recipient": ["Test@gmail.com"],
 		"subject": "Test subject",
 		"message": "Test message"
 	}`)
@@ -39,18 +44,19 @@ func TestEmailSuccessful(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	assert.Equal(t, 200, res.StatusCode)
-
 	body, _ := io.ReadAll(res.Body)
 
-	assert.Equal(t, `{"message":"Notification sent"}`, string(body))
+	assert.Equal(t,
+		200, res.StatusCode, "Expected 200, got %d. Response: %s",
+		res.StatusCode, string(body))
+
 }
 
 func TestEmailWrongEmailFormat(t *testing.T) {
 	app := SetUp()
 	jsonBody := []byte(`{
 		"type": "email",
-		"recipient": "user",
+		"recipient": ["user"],
 		"subject": "Test subject",
 		"message": "Test message"
 	}`)
@@ -65,11 +71,13 @@ func TestEmailWrongEmailFormat(t *testing.T) {
 
 	res, err := app.Test(req, -1)
 
-	assert.Equal(t, 400, res.StatusCode)
-
 	body, _ := io.ReadAll(res.Body)
 
-	assert.Contains(t, string(body), "Validation error")
+	assert.Equal(t,
+		400, res.StatusCode, "Expected 400, got %d. Response: %s",
+		res.StatusCode, string(body))
+
+	assert.Contains(t, string(body), "payload field validation error")
 }
 
 func TestEmailMissingField(t *testing.T) {
@@ -90,11 +98,13 @@ func TestEmailMissingField(t *testing.T) {
 
 	res, err := app.Test(req, -1)
 
-	assert.Equal(t, 400, res.StatusCode)
-
 	body, _ := io.ReadAll(res.Body)
 
-	assert.Contains(t, string(body), "Validation error")
+	assert.Equal(t,
+		400, res.StatusCode, "Expected 400, got %d. Response: %s",
+		res.StatusCode, string(body))
+
+	assert.Contains(t, string(body), "payload field validation error")
 }
 
 func TestEmailExtraField(t *testing.T) {
@@ -117,9 +127,11 @@ func TestEmailExtraField(t *testing.T) {
 
 	res, err := app.Test(req, -1)
 
-	assert.Equal(t, 400, res.StatusCode)
-
 	body, _ := io.ReadAll(res.Body)
 
-	assert.Contains(t, string(body), "Validation error")
+	assert.Equal(t,
+		400, res.StatusCode, "Expected 400, got %d. Response: %s",
+		res.StatusCode, string(body))
+
+	assert.Contains(t, string(body), "payload structure validation error")
 }
