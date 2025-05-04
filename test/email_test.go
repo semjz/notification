@@ -17,7 +17,7 @@ func SetUp() *fiber.App {
 		AppName: "notification",
 	})
 	mockBroker := mocks.MockBroker{}
-	app.Post("/notification", handler.SendNotification(mockBroker))
+	app.Post("/notification", handler.SendNotification(&mockBroker))
 	router.SetUpRoutes(app)
 	return app
 }
