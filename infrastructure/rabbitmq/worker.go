@@ -1,22 +1,30 @@
 package rabbitmq
 
 import (
+	"context"
 	"encoding/json"
-	"log"
-	"notification/pkg/setup"
-
+	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"log"
+	"notification/ent"
+	"notification/pkg"
+	"time"
 )
 
-func Receiver() {
+func (r *RabbitMQ) Receiver(client *ent.Client) {
 	// Connect to RabbitMQ
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
-	failOnError(err, "Failed to connect to RabbitMQ")
+
+	if r.logError("Failed to connect to RabbitMQ", err) {
+		return
+	}
 	defer conn.Close()
 
 	// Create a channel
 	ch, err := conn.Channel()
-	failOnError(err, "Failed to open a channel")
+	if r.logError("Failed to open a channel", err) {
+		return
+	}
 	defer ch.Close()
 
 	// Declare a queue
@@ -26,16 +34,25 @@ func Receiver() {
 		false,        // delete when unused
 		false,        // exclusive
 		false,        // no-wait
-		nil,          // arguments
-	)
-	failOnError(err, "Failed to declare a queue")
+		amqp.Table{
+			"x-dead-letter-exchange":    "", // default exchange
+			"x-dead-letter-routing-key": "retry_queue",
+			// arguments
+		})
+
+	if r.logError("Failed to declare a queue", err) {
+		return
+	}
 
 	err = ch.Qos(
 		1,     // prefetch count
 		0,     // prefetch size
 		false, // global
 	)
-	failOnError(err, "Failed to set QoS")
+
+	if r.logError("Failed to set QoS", err) {
+		return
+	}
 
 	// Consume messages from the queue
 	msgs, err := ch.Consume(
@@ -47,7 +64,9 @@ func Receiver() {
 		false,  // no-wait
 		nil,    // args
 	)
-	failOnError(err, "Failed to register a consumer")
+	if r.logError("Failed to register a consumer", err) {
+		return
+	}
 
 	// This channel will keep the main goroutine alive
 	var forever chan struct{}
@@ -61,19 +80,40 @@ func Receiver() {
 		for d := range msgs {
 
 			var hint TypeHint
+			id := d.Headers["id"].(string)
+			uuid, _ := uuid.Parse(id)
 			err := json.Unmarshal(d.Body, &hint)
-			failOnError(err, "Failed to unmarshal type")
+			if r.logError("Failed to unmarshal", err) {
+				return
+			}
 
-			notifier, factoryFunc, err := setup.GetNotifier(hint.Type)
-			failOnError(err, "Failed to unmarshal payload")
+			notifier, factoryFunc, err := pkg.GetNotifier(hint.Type)
+			if r.logError("Failed to get notifier", err) {
+				return
+			}
 
 			payload := factoryFunc()
 			err = json.Unmarshal(d.Body, payload)
 
-			failOnError(err, "Failed to unmarshal notification")
+			if r.logError("Failed to unmarshal", err) {
+				return
+			}
 
 			err = notifier.Send(payload)
-			failOnError(err, "Failed to send a message")
+			if r.logError("Failed to send", err) {
+				DBMessages, _ := client.Message.Get(context.Background(), uuid)
+				rc := DBMessages.Attempts + 1
+				client.Message.UpdateOneID(uuid).
+					SetAttempts(rc).
+					SetNextRetryAt(time.Now().Add(5 * time.Minute)).
+					Save(context.Background())
+				d.Reject(false)
+				continue
+			}
+
+			client.Message.UpdateOneID(uuid).
+				SetStatus("sent").
+				Save(context.Background())
 			d.Ack(false)
 		}
 	}()

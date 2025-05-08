@@ -1,61 +1,56 @@
 package handler
 
 import (
-	"bytes"
-	"encoding/json"
-	"errors"
-	"github.com/go-playground/validator/v10"
+	"context"
 	"github.com/gofiber/fiber/v2"
-	"notification/infrastructure/rabbitmq"
+	"notification/domain/notify"
+	"notification/ent"
+	"notification/pkg"
 	_ "notification/pkg/service"
-	"notification/pkg/setup"
 )
 
-var validate = setup.Validate
+func SendNotification(broker notify.Broker, client *ent.Client) fiber.Handler {
+	return func(c *fiber.Ctx) error {
 
-func SendNotification(c *fiber.Ctx) error {
-	var meta struct {
-		Type string `json:"type"`
-	}
-
-	if err := c.BodyParser(&meta); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	_, factory, err := setup.GetNotifier(meta.Type)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "unsupported notifier " + meta.Type})
-	}
-
-	payload := factory()
-
-	var raw map[string]json.RawMessage
-	json.Unmarshal(c.Body(), &raw)
-	delete(raw, "type")
-
-	body, _ := json.Marshal(raw)
-
-	decoder := json.NewDecoder(bytes.NewReader(body))
-	decoder.DisallowUnknownFields()
-
-	if err := decoder.Decode(&payload); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"Validation error": err.Error()})
-	}
-
-	if err := validate.Struct(payload); err != nil {
-		errs := make([]string, 0)
-		var ve validator.ValidationErrors
-		if errors.As(err, &ve) {
-			for _, err := range err.(validator.ValidationErrors) {
-				errs = append(errs, err.Field()+" is "+err.Tag())
-			}
-		} else {
-			errs = append(errs, err.Error())
+		var meta struct {
+			Type string `json:"type"`
 		}
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"Validation error": errs})
+
+		if err := c.BodyParser(&meta); err != nil {
+			return respondWithError(c, fiber.StatusBadRequest, err.Error())
+		}
+
+		_, factory, err := pkg.GetNotifier(meta.Type)
+		if err != nil {
+			return respondWithError(c, fiber.StatusBadRequest, "unsupported notifier "+meta.Type)
+		}
+
+		payload := factory()
+
+		decoder := pkg.ValidatePayloadStructure(c.Body())
+
+		if err := decoder.Decode(&payload); err != nil {
+			return respondWithError(c, fiber.StatusBadRequest, "payload structure validation error")
+		}
+
+		if err := pkg.ValidatePayloadFields(payload); err != nil {
+			return respondWithError(c, fiber.StatusBadRequest, "payload field validation error")
+		}
+		DBTypePayload, err := pkg.StructToMap(payload)
+		message, err := client.Message.
+			Create().
+			SetType(meta.Type).
+			SetPayload(DBTypePayload).
+			SetAttempts(1).
+			Save(context.Background())
+		broker.Process(message)
+
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Notification sent"})
 	}
+}
 
-	rabbitmq.SetUpSend(payload)
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Notification sent"})
+func respondWithError(c *fiber.Ctx, status int, errMsg string) error {
+	return c.Status(status).JSON(fiber.Map{
+		"error": errMsg,
+	})
 }

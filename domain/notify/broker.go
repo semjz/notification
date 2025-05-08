@@ -1,7 +1,7 @@
 package notify
 
-import "notification/domain/notify"
+import "notification/ent"
 
 type Broker interface {
-	Send(payload NotifyPayload)
+	Process(message *ent.Message)
 }

@@ -2,26 +2,52 @@ package rabbitmq
 
 import (
 	"context"
+	"encoding/json"
 	"log"
-	"notification/domain/notify"
+	"notification/ent"
+	"os"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func failOnError(err error, msg string) {
-	if err != nil {
-		log.Panicf("%s: %s", msg, err)
-	}
+type RabbitMQ struct {
+	logger *log.Logger
 }
 
-func SetUpSend(payload notify.NotifyPayload) {
+func NewRabbitMQ() *RabbitMQ {
+	logFile, err := os.OpenFile("notification.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		log.Fatalf("Could not open log file %v", err)
+	}
+	logger := log.New(logFile, "RABBITMQ ERROR: ", log.LstdFlags|log.Lshortfile)
+	return &RabbitMQ{logger: logger}
+}
+
+func (r *RabbitMQ) logError(context string, err error) bool {
+	if err != nil {
+		r.logger.Printf("%s: %s", context, err)
+		return true
+	}
+	return false
+}
+
+func (r *RabbitMQ) Process(message *ent.Message) {
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
-	failOnError(err, "Failed to connect to RabbitMQ")
+
+	if r.logError("Failed to connect to RabbitMQ", err) {
+		return
+	}
+
 	defer conn.Close()
+
 	ch, err := conn.Channel()
-	failOnError(err, "Failed to open a channel")
+
 	defer ch.Close()
+
+	if r.logError("Failed to open a channel", err) {
+		return
+	}
 
 	q, err := ch.QueueDeclare(
 		"task_queue", // name
@@ -29,16 +55,32 @@ func SetUpSend(payload notify.NotifyPayload) {
 		false,        // delete when unused
 		false,        // exclusive
 		false,        // no-wait
-		nil,          // arguments
-	)
-	failOnError(err, "Failed to declare a queue")
+		amqp.Table{
+			"x-dead-letter-exchange":    "", // default exchange
+			"x-dead-letter-routing-key": "retry_queue",
+		})
+
+	ch.QueueDeclare("retry_queue", true, false, false, false, amqp.Table{
+		"x-max-priority":            int32(3),             // allow priority 0–3
+		"x-message-ttl":             int32(5 * 60 * 1000), // 5 min
+		"x-dead-letter-exchange":    "",
+		"x-dead-letter-routing-key": "task_queue",
+	})
+
+	ch.QueueDeclare("dead_queue", true, false, false, false, nil)
+
+	if r.logError("Failed to declare a queue", err) {
+		return
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	body, err := payload.MarshalJSON()
+	body, err := json.Marshal(message.Payload)
 
-	failOnError(err, "Failed to serialize payload")
+	if r.logError("Failed to marshal payload", err) {
+		return
+	}
 
 	err = ch.PublishWithContext(ctx,
 		"",
@@ -49,7 +91,13 @@ func SetUpSend(payload notify.NotifyPayload) {
 			DeliveryMode: amqp.Persistent,
 			ContentType:  "text/plain",
 			Body:         body,
+			Priority:     0, // initial priority
+			Headers:      amqp.Table{"id": message.ID.String()},
 		})
-	failOnError(err, "Failed to publish a message")
-	log.Printf(" [x] Sent %s", payload)
+
+	if r.logError("Failed to publish a message", err) {
+		return
+	}
+
+	log.Printf(" [x] Sent %s", message.Payload)
 }

@@ -6,7 +6,7 @@ import (
 	"notification/config"
 	"notification/domain/notify"
 	"notification/infrastructure/email"
-	"notification/pkg/setup"
+	"notification/pkg"
 )
 
 type EmailPayload struct {
@@ -57,7 +57,7 @@ func (en *EmailNotifier) Send(payload notify.NotifyPayload) error {
 }
 
 func init() {
-	setup.RegisterNotifier("email", setup.NotifierEntry{
+	pkg.RegisterNotifier("email", pkg.NotifierEntry{
 		NewPayload: func() notify.NotifyPayload { return &EmailPayload{} },
 		Notifier:   &EmailNotifier{},
 	})

@@ -7,8 +7,8 @@ import (
 	"io"
 	"net/http"
 	"notification/api/handler"
+	database "notification/cmd/migrate"
 	"notification/mocks"
-	"notification/router"
 	"testing"
 )
 
@@ -16,9 +16,9 @@ func SetUp() *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName: "notification",
 	})
+	client := database.DBConnect()
 	mockBroker := mocks.MockBroker{}
-	app.Post("/notification", handler.SendNotification(&mockBroker))
-	router.SetUpRoutes(app)
+	app.Post("/notification", handler.SendNotification(&mockBroker, client))
 	return app
 }
 

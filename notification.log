@@ -1,0 +1,2 @@
+RABBITMQ ERROR: 2025/05/08 14:34:06 sender.go:31: Failed to declare a queue: Exception (406) Reason: "PRECONDITION_FAILED - inequivalent arg 'x-dead-letter-exchange' for queue 'task_queue' in vhost '/': received the value '' of type 'longstr' but current is none"
+RABBITMQ ERROR: 2025/05/08 14:35:45 sender.go:31: Failed to declare a queue: Exception (406) Reason: "PRECONDITION_FAILED - inequivalent arg 'x-dead-letter-exchange' for queue 'task_queue' in vhost '/': received the value '' of type 'longstr' but current is none"
