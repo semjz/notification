@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"time"
@@ -23,8 +24,6 @@ func (Message) Fields() []ent.Field {
 		field.Enum("status").
 			Values("pending", "sent", "failed").
 			Default("pending"),
-		field.Int("attempts").Default(0),
-		field.Time("next_retry_at").Nillable().Optional(),
 		field.Time("created_at").Default(time.Now),
 		field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now),
 	}
@@ -32,5 +31,7 @@ func (Message) Fields() []ent.Field {
 
 // Edges of the Message.
 func (Message) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("retry", Retry.Type).Unique(),
+	}
 }

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"notification/domain/notify"
-	"notification/pkg"
+	"notification/internal"
 )
 
 type SmsPayload struct {
@@ -62,7 +62,7 @@ func (en *SmsNotifier) Send(payload notify.NotifyPayload) error {
 
 func init() {
 
-	pkg.RegisterNotifier("sms", pkg.NotifierEntry{
+	internal.RegisterNotifier("sms", internal.NotifierEntry{
 		NewPayload: func() notify.NotifyPayload { return &SmsPayload{} },
 		Notifier:   &SmsNotifier{},
 	})

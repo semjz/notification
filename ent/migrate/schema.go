@@ -14,8 +14,6 @@ var (
 		{Name: "type", Type: field.TypeString},
 		{Name: "payload", Type: field.TypeJSON},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "sent", "failed"}, Default: "pending"},
-		{Name: "attempts", Type: field.TypeInt, Default: 0},
-		{Name: "next_retry_at", Type: field.TypeTime, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 	}
@@ -25,11 +23,37 @@ var (
 		Columns:    MessagesColumns,
 		PrimaryKey: []*schema.Column{MessagesColumns[0]},
 	}
+	// RetriesColumns holds the columns for the "retries" table.
+	RetriesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "failed"}, Default: "pending"},
+		{Name: "attempts", Type: field.TypeInt, Default: 1},
+		{Name: "next_retry_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "message_uuid", Type: field.TypeUUID, Unique: true},
+	}
+	// RetriesTable holds the schema information for the "retries" table.
+	RetriesTable = &schema.Table{
+		Name:       "retries",
+		Columns:    RetriesColumns,
+		PrimaryKey: []*schema.Column{RetriesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "retries_messages_retry",
+				Columns:    []*schema.Column{RetriesColumns[6]},
+				RefColumns: []*schema.Column{MessagesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		MessagesTable,
+		RetriesTable,
 	}
 )
 
 func init() {
+	RetriesTable.ForeignKeys[0].RefTable = MessagesTable
 }

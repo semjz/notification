@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -58,16 +59,6 @@ func IDLTE(id uuid.UUID) predicate.Message {
 // Type applies equality check predicate on the "type" field. It's identical to TypeEQ.
 func Type(v string) predicate.Message {
 	return predicate.Message(sql.FieldEQ(FieldType, v))
-}
-
-// Attempts applies equality check predicate on the "attempts" field. It's identical to AttemptsEQ.
-func Attempts(v int) predicate.Message {
-	return predicate.Message(sql.FieldEQ(FieldAttempts, v))
-}
-
-// NextRetryAt applies equality check predicate on the "next_retry_at" field. It's identical to NextRetryAtEQ.
-func NextRetryAt(v time.Time) predicate.Message {
-	return predicate.Message(sql.FieldEQ(FieldNextRetryAt, v))
 }
 
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
@@ -165,96 +156,6 @@ func StatusNotIn(vs ...Status) predicate.Message {
 	return predicate.Message(sql.FieldNotIn(FieldStatus, vs...))
 }
 
-// AttemptsEQ applies the EQ predicate on the "attempts" field.
-func AttemptsEQ(v int) predicate.Message {
-	return predicate.Message(sql.FieldEQ(FieldAttempts, v))
-}
-
-// AttemptsNEQ applies the NEQ predicate on the "attempts" field.
-func AttemptsNEQ(v int) predicate.Message {
-	return predicate.Message(sql.FieldNEQ(FieldAttempts, v))
-}
-
-// AttemptsIn applies the In predicate on the "attempts" field.
-func AttemptsIn(vs ...int) predicate.Message {
-	return predicate.Message(sql.FieldIn(FieldAttempts, vs...))
-}
-
-// AttemptsNotIn applies the NotIn predicate on the "attempts" field.
-func AttemptsNotIn(vs ...int) predicate.Message {
-	return predicate.Message(sql.FieldNotIn(FieldAttempts, vs...))
-}
-
-// AttemptsGT applies the GT predicate on the "attempts" field.
-func AttemptsGT(v int) predicate.Message {
-	return predicate.Message(sql.FieldGT(FieldAttempts, v))
-}
-
-// AttemptsGTE applies the GTE predicate on the "attempts" field.
-func AttemptsGTE(v int) predicate.Message {
-	return predicate.Message(sql.FieldGTE(FieldAttempts, v))
-}
-
-// AttemptsLT applies the LT predicate on the "attempts" field.
-func AttemptsLT(v int) predicate.Message {
-	return predicate.Message(sql.FieldLT(FieldAttempts, v))
-}
-
-// AttemptsLTE applies the LTE predicate on the "attempts" field.
-func AttemptsLTE(v int) predicate.Message {
-	return predicate.Message(sql.FieldLTE(FieldAttempts, v))
-}
-
-// NextRetryAtEQ applies the EQ predicate on the "next_retry_at" field.
-func NextRetryAtEQ(v time.Time) predicate.Message {
-	return predicate.Message(sql.FieldEQ(FieldNextRetryAt, v))
-}
-
-// NextRetryAtNEQ applies the NEQ predicate on the "next_retry_at" field.
-func NextRetryAtNEQ(v time.Time) predicate.Message {
-	return predicate.Message(sql.FieldNEQ(FieldNextRetryAt, v))
-}
-
-// NextRetryAtIn applies the In predicate on the "next_retry_at" field.
-func NextRetryAtIn(vs ...time.Time) predicate.Message {
-	return predicate.Message(sql.FieldIn(FieldNextRetryAt, vs...))
-}
-
-// NextRetryAtNotIn applies the NotIn predicate on the "next_retry_at" field.
-func NextRetryAtNotIn(vs ...time.Time) predicate.Message {
-	return predicate.Message(sql.FieldNotIn(FieldNextRetryAt, vs...))
-}
-
-// NextRetryAtGT applies the GT predicate on the "next_retry_at" field.
-func NextRetryAtGT(v time.Time) predicate.Message {
-	return predicate.Message(sql.FieldGT(FieldNextRetryAt, v))
-}
-
-// NextRetryAtGTE applies the GTE predicate on the "next_retry_at" field.
-func NextRetryAtGTE(v time.Time) predicate.Message {
-	return predicate.Message(sql.FieldGTE(FieldNextRetryAt, v))
-}
-
-// NextRetryAtLT applies the LT predicate on the "next_retry_at" field.
-func NextRetryAtLT(v time.Time) predicate.Message {
-	return predicate.Message(sql.FieldLT(FieldNextRetryAt, v))
-}
-
-// NextRetryAtLTE applies the LTE predicate on the "next_retry_at" field.
-func NextRetryAtLTE(v time.Time) predicate.Message {
-	return predicate.Message(sql.FieldLTE(FieldNextRetryAt, v))
-}
-
-// NextRetryAtIsNil applies the IsNil predicate on the "next_retry_at" field.
-func NextRetryAtIsNil() predicate.Message {
-	return predicate.Message(sql.FieldIsNull(FieldNextRetryAt))
-}
-
-// NextRetryAtNotNil applies the NotNil predicate on the "next_retry_at" field.
-func NextRetryAtNotNil() predicate.Message {
-	return predicate.Message(sql.FieldNotNull(FieldNextRetryAt))
-}
-
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Message {
 	return predicate.Message(sql.FieldEQ(FieldCreatedAt, v))
@@ -333,6 +234,29 @@ func UpdatedAtLT(v time.Time) predicate.Message {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.Message {
 	return predicate.Message(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// HasRetry applies the HasEdge predicate on the "retry" edge.
+func HasRetry() predicate.Message {
+	return predicate.Message(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, RetryTable, RetryColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRetryWith applies the HasEdge predicate on the "retry" edge with a given conditions (other predicates).
+func HasRetryWith(preds ...predicate.Retry) predicate.Message {
+	return predicate.Message(func(s *sql.Selector) {
+		step := newRetryStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

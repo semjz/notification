@@ -12,10 +12,12 @@ import (
 	"notification/ent/migrate"
 
 	"notification/ent/message"
+	"notification/ent/retry"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -26,6 +28,8 @@ type Client struct {
 	Schema *migrate.Schema
 	// Message is the client for interacting with the Message builders.
 	Message *MessageClient
+	// Retry is the client for interacting with the Retry builders.
+	Retry *RetryClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -38,6 +42,7 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Message = NewMessageClient(c.config)
+	c.Retry = NewRetryClient(c.config)
 }
 
 type (
@@ -131,6 +136,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ctx:     ctx,
 		config:  cfg,
 		Message: NewMessageClient(cfg),
+		Retry:   NewRetryClient(cfg),
 	}, nil
 }
 
@@ -151,6 +157,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ctx:     ctx,
 		config:  cfg,
 		Message: NewMessageClient(cfg),
+		Retry:   NewRetryClient(cfg),
 	}, nil
 }
 
@@ -180,12 +187,14 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	c.Message.Use(hooks...)
+	c.Retry.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.Message.Intercept(interceptors...)
+	c.Retry.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -193,6 +202,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *MessageMutation:
 		return c.Message.mutate(ctx, m)
+	case *RetryMutation:
+		return c.Retry.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -306,6 +317,22 @@ func (c *MessageClient) GetX(ctx context.Context, id uuid.UUID) *Message {
 	return obj
 }
 
+// QueryRetry queries the retry edge of a Message.
+func (c *MessageClient) QueryRetry(m *Message) *RetryQuery {
+	query := (&RetryClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(message.Table, message.FieldID, id),
+			sqlgraph.To(retry.Table, retry.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, message.RetryTable, message.RetryColumn),
+		)
+		fromV = sqlgraph.Neighbors(m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *MessageClient) Hooks() []Hook {
 	return c.hooks.Message
@@ -331,12 +358,161 @@ func (c *MessageClient) mutate(ctx context.Context, m *MessageMutation) (Value, 
 	}
 }
 
+// RetryClient is a client for the Retry schema.
+type RetryClient struct {
+	config
+}
+
+// NewRetryClient returns a client for the Retry from the given config.
+func NewRetryClient(c config) *RetryClient {
+	return &RetryClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `retry.Hooks(f(g(h())))`.
+func (c *RetryClient) Use(hooks ...Hook) {
+	c.hooks.Retry = append(c.hooks.Retry, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `retry.Intercept(f(g(h())))`.
+func (c *RetryClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Retry = append(c.inters.Retry, interceptors...)
+}
+
+// Create returns a builder for creating a Retry entity.
+func (c *RetryClient) Create() *RetryCreate {
+	mutation := newRetryMutation(c.config, OpCreate)
+	return &RetryCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Retry entities.
+func (c *RetryClient) CreateBulk(builders ...*RetryCreate) *RetryCreateBulk {
+	return &RetryCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RetryClient) MapCreateBulk(slice any, setFunc func(*RetryCreate, int)) *RetryCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RetryCreateBulk{err: fmt.Errorf("calling to RetryClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RetryCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RetryCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Retry.
+func (c *RetryClient) Update() *RetryUpdate {
+	mutation := newRetryMutation(c.config, OpUpdate)
+	return &RetryUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RetryClient) UpdateOne(r *Retry) *RetryUpdateOne {
+	mutation := newRetryMutation(c.config, OpUpdateOne, withRetry(r))
+	return &RetryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RetryClient) UpdateOneID(id int) *RetryUpdateOne {
+	mutation := newRetryMutation(c.config, OpUpdateOne, withRetryID(id))
+	return &RetryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Retry.
+func (c *RetryClient) Delete() *RetryDelete {
+	mutation := newRetryMutation(c.config, OpDelete)
+	return &RetryDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RetryClient) DeleteOne(r *Retry) *RetryDeleteOne {
+	return c.DeleteOneID(r.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RetryClient) DeleteOneID(id int) *RetryDeleteOne {
+	builder := c.Delete().Where(retry.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RetryDeleteOne{builder}
+}
+
+// Query returns a query builder for Retry.
+func (c *RetryClient) Query() *RetryQuery {
+	return &RetryQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRetry},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Retry entity by its id.
+func (c *RetryClient) Get(ctx context.Context, id int) (*Retry, error) {
+	return c.Query().Where(retry.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RetryClient) GetX(ctx context.Context, id int) *Retry {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryMessage queries the message edge of a Retry.
+func (c *RetryClient) QueryMessage(r *Retry) *MessageQuery {
+	query := (&MessageClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(retry.Table, retry.FieldID, id),
+			sqlgraph.To(message.Table, message.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, retry.MessageTable, retry.MessageColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *RetryClient) Hooks() []Hook {
+	return c.hooks.Retry
+}
+
+// Interceptors returns the client interceptors.
+func (c *RetryClient) Interceptors() []Interceptor {
+	return c.inters.Retry
+}
+
+func (c *RetryClient) mutate(ctx context.Context, m *RetryMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RetryCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RetryUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RetryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RetryDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Retry mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Message []ent.Hook
+		Message, Retry []ent.Hook
 	}
 	inters struct {
-		Message []ent.Interceptor
+		Message, Retry []ent.Interceptor
 	}
 )

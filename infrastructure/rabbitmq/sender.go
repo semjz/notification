@@ -55,19 +55,8 @@ func (r *RabbitMQ) Process(message *ent.Message) {
 		false,        // delete when unused
 		false,        // exclusive
 		false,        // no-wait
-		amqp.Table{
-			"x-dead-letter-exchange":    "", // default exchange
-			"x-dead-letter-routing-key": "retry_queue",
-		})
-
-	ch.QueueDeclare("retry_queue", true, false, false, false, amqp.Table{
-		"x-max-priority":            int32(3),             // allow priority 0–3
-		"x-message-ttl":             int32(5 * 60 * 1000), // 5 min
-		"x-dead-letter-exchange":    "",
-		"x-dead-letter-routing-key": "task_queue",
-	})
-
-	ch.QueueDeclare("dead_queue", true, false, false, false, nil)
+		nil,
+	)
 
 	if r.logError("Failed to declare a queue", err) {
 		return

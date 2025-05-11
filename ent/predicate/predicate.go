@@ -8,3 +8,6 @@ import (
 
 // Message is the predicate function for message builders.
 type Message func(*sql.Selector)
+
+// Retry is the predicate function for retry builders.
+type Retry func(*sql.Selector)

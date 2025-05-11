@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"notification/ent/message"
+	"notification/ent/retry"
 	"strings"
 	"time"
 
@@ -25,15 +26,34 @@ type Message struct {
 	Payload map[string]interface{} `json:"payload,omitempty"`
 	// Status holds the value of the "status" field.
 	Status message.Status `json:"status,omitempty"`
-	// Attempts holds the value of the "attempts" field.
-	Attempts int `json:"attempts,omitempty"`
-	// NextRetryAt holds the value of the "next_retry_at" field.
-	NextRetryAt *time.Time `json:"next_retry_at,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt    time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the MessageQuery when eager-loading is set.
+	Edges        MessageEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// MessageEdges holds the relations/edges for other nodes in the graph.
+type MessageEdges struct {
+	// Retry holds the value of the retry edge.
+	Retry *Retry `json:"retry,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// RetryOrErr returns the Retry value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e MessageEdges) RetryOrErr() (*Retry, error) {
+	if e.Retry != nil {
+		return e.Retry, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: retry.Label}
+	}
+	return nil, &NotLoadedError{edge: "retry"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -43,11 +63,9 @@ func (*Message) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case message.FieldPayload:
 			values[i] = new([]byte)
-		case message.FieldAttempts:
-			values[i] = new(sql.NullInt64)
 		case message.FieldType, message.FieldStatus:
 			values[i] = new(sql.NullString)
-		case message.FieldNextRetryAt, message.FieldCreatedAt, message.FieldUpdatedAt:
+		case message.FieldCreatedAt, message.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		case message.FieldID:
 			values[i] = new(uuid.UUID)
@@ -92,19 +110,6 @@ func (m *Message) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				m.Status = message.Status(value.String)
 			}
-		case message.FieldAttempts:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field attempts", values[i])
-			} else if value.Valid {
-				m.Attempts = int(value.Int64)
-			}
-		case message.FieldNextRetryAt:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field next_retry_at", values[i])
-			} else if value.Valid {
-				m.NextRetryAt = new(time.Time)
-				*m.NextRetryAt = value.Time
-			}
 		case message.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
@@ -128,6 +133,11 @@ func (m *Message) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (m *Message) Value(name string) (ent.Value, error) {
 	return m.selectValues.Get(name)
+}
+
+// QueryRetry queries the "retry" edge of the Message entity.
+func (m *Message) QueryRetry() *RetryQuery {
+	return NewMessageClient(m.config).QueryRetry(m)
 }
 
 // Update returns a builder for updating this Message.
@@ -161,14 +171,6 @@ func (m *Message) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", m.Status))
-	builder.WriteString(", ")
-	builder.WriteString("attempts=")
-	builder.WriteString(fmt.Sprintf("%v", m.Attempts))
-	builder.WriteString(", ")
-	if v := m.NextRetryAt; v != nil {
-		builder.WriteString("next_retry_at=")
-		builder.WriteString(v.Format(time.ANSIC))
-	}
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(m.CreatedAt.Format(time.ANSIC))

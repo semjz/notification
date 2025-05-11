@@ -2,11 +2,12 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"notification/domain/notify"
 	"notification/ent"
-	"notification/pkg"
-	_ "notification/pkg/service"
+	"notification/internal"
+	_ "notification/internal/service"
 )
 
 func SendNotification(broker notify.Broker, client *ent.Client) fiber.Handler {
@@ -20,29 +21,29 @@ func SendNotification(broker notify.Broker, client *ent.Client) fiber.Handler {
 			return respondWithError(c, fiber.StatusBadRequest, err.Error())
 		}
 
-		_, factory, err := pkg.GetNotifier(meta.Type)
+		_, factory, err := internal.GetNotifier(meta.Type)
 		if err != nil {
 			return respondWithError(c, fiber.StatusBadRequest, "unsupported notifier "+meta.Type)
 		}
 
 		payload := factory()
 
-		decoder := pkg.ValidatePayloadStructure(c.Body())
+		decoder := internal.ValidatePayloadStructure(c.Body())
 
 		if err := decoder.Decode(&payload); err != nil {
 			return respondWithError(c, fiber.StatusBadRequest, "payload structure validation error")
 		}
 
-		if err := pkg.ValidatePayloadFields(payload); err != nil {
+		if err := internal.ValidatePayloadFields(payload); err != nil {
 			return respondWithError(c, fiber.StatusBadRequest, "payload field validation error")
 		}
-		DBTypePayload, err := pkg.StructToMap(payload)
+		DBTypePayload, err := internal.StructToMap(payload)
 		message, err := client.Message.
 			Create().
 			SetType(meta.Type).
 			SetPayload(DBTypePayload).
-			SetAttempts(1).
 			Save(context.Background())
+		fmt.Println(message)
 		broker.Process(message)
 
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Notification sent"})

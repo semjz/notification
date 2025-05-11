@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"notification/ent/message"
 	"notification/ent/predicate"
+	"notification/ent/retry"
 	"sync"
 	"time"
 
@@ -26,6 +27,7 @@ const (
 
 	// Node types.
 	TypeMessage = "Message"
+	TypeRetry   = "Retry"
 )
 
 // MessageMutation represents an operation that mutates the Message nodes in the graph.
@@ -37,12 +39,11 @@ type MessageMutation struct {
 	_type         *string
 	payload       *map[string]interface{}
 	status        *message.Status
-	attempts      *int
-	addattempts   *int
-	next_retry_at *time.Time
 	created_at    *time.Time
 	updated_at    *time.Time
 	clearedFields map[string]struct{}
+	retry         *int
+	clearedretry  bool
 	done          bool
 	oldValue      func(context.Context) (*Message, error)
 	predicates    []predicate.Message
@@ -260,111 +261,6 @@ func (m *MessageMutation) ResetStatus() {
 	m.status = nil
 }
 
-// SetAttempts sets the "attempts" field.
-func (m *MessageMutation) SetAttempts(i int) {
-	m.attempts = &i
-	m.addattempts = nil
-}
-
-// Attempts returns the value of the "attempts" field in the mutation.
-func (m *MessageMutation) Attempts() (r int, exists bool) {
-	v := m.attempts
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldAttempts returns the old "attempts" field's value of the Message entity.
-// If the Message object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MessageMutation) OldAttempts(ctx context.Context) (v int, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldAttempts is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldAttempts requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldAttempts: %w", err)
-	}
-	return oldValue.Attempts, nil
-}
-
-// AddAttempts adds i to the "attempts" field.
-func (m *MessageMutation) AddAttempts(i int) {
-	if m.addattempts != nil {
-		*m.addattempts += i
-	} else {
-		m.addattempts = &i
-	}
-}
-
-// AddedAttempts returns the value that was added to the "attempts" field in this mutation.
-func (m *MessageMutation) AddedAttempts() (r int, exists bool) {
-	v := m.addattempts
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// ResetAttempts resets all changes to the "attempts" field.
-func (m *MessageMutation) ResetAttempts() {
-	m.attempts = nil
-	m.addattempts = nil
-}
-
-// SetNextRetryAt sets the "next_retry_at" field.
-func (m *MessageMutation) SetNextRetryAt(t time.Time) {
-	m.next_retry_at = &t
-}
-
-// NextRetryAt returns the value of the "next_retry_at" field in the mutation.
-func (m *MessageMutation) NextRetryAt() (r time.Time, exists bool) {
-	v := m.next_retry_at
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldNextRetryAt returns the old "next_retry_at" field's value of the Message entity.
-// If the Message object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MessageMutation) OldNextRetryAt(ctx context.Context) (v *time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldNextRetryAt is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldNextRetryAt requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldNextRetryAt: %w", err)
-	}
-	return oldValue.NextRetryAt, nil
-}
-
-// ClearNextRetryAt clears the value of the "next_retry_at" field.
-func (m *MessageMutation) ClearNextRetryAt() {
-	m.next_retry_at = nil
-	m.clearedFields[message.FieldNextRetryAt] = struct{}{}
-}
-
-// NextRetryAtCleared returns if the "next_retry_at" field was cleared in this mutation.
-func (m *MessageMutation) NextRetryAtCleared() bool {
-	_, ok := m.clearedFields[message.FieldNextRetryAt]
-	return ok
-}
-
-// ResetNextRetryAt resets all changes to the "next_retry_at" field.
-func (m *MessageMutation) ResetNextRetryAt() {
-	m.next_retry_at = nil
-	delete(m.clearedFields, message.FieldNextRetryAt)
-}
-
 // SetCreatedAt sets the "created_at" field.
 func (m *MessageMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -437,6 +333,45 @@ func (m *MessageMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetRetryID sets the "retry" edge to the Retry entity by id.
+func (m *MessageMutation) SetRetryID(id int) {
+	m.retry = &id
+}
+
+// ClearRetry clears the "retry" edge to the Retry entity.
+func (m *MessageMutation) ClearRetry() {
+	m.clearedretry = true
+}
+
+// RetryCleared reports if the "retry" edge to the Retry entity was cleared.
+func (m *MessageMutation) RetryCleared() bool {
+	return m.clearedretry
+}
+
+// RetryID returns the "retry" edge ID in the mutation.
+func (m *MessageMutation) RetryID() (id int, exists bool) {
+	if m.retry != nil {
+		return *m.retry, true
+	}
+	return
+}
+
+// RetryIDs returns the "retry" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// RetryID instead. It exists only for internal usage by the builders.
+func (m *MessageMutation) RetryIDs() (ids []int) {
+	if id := m.retry; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetRetry resets all changes to the "retry" edge.
+func (m *MessageMutation) ResetRetry() {
+	m.retry = nil
+	m.clearedretry = false
+}
+
 // Where appends a list predicates to the MessageMutation builder.
 func (m *MessageMutation) Where(ps ...predicate.Message) {
 	m.predicates = append(m.predicates, ps...)
@@ -471,7 +406,7 @@ func (m *MessageMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *MessageMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 5)
 	if m._type != nil {
 		fields = append(fields, message.FieldType)
 	}
@@ -480,12 +415,6 @@ func (m *MessageMutation) Fields() []string {
 	}
 	if m.status != nil {
 		fields = append(fields, message.FieldStatus)
-	}
-	if m.attempts != nil {
-		fields = append(fields, message.FieldAttempts)
-	}
-	if m.next_retry_at != nil {
-		fields = append(fields, message.FieldNextRetryAt)
 	}
 	if m.created_at != nil {
 		fields = append(fields, message.FieldCreatedAt)
@@ -507,10 +436,6 @@ func (m *MessageMutation) Field(name string) (ent.Value, bool) {
 		return m.Payload()
 	case message.FieldStatus:
 		return m.Status()
-	case message.FieldAttempts:
-		return m.Attempts()
-	case message.FieldNextRetryAt:
-		return m.NextRetryAt()
 	case message.FieldCreatedAt:
 		return m.CreatedAt()
 	case message.FieldUpdatedAt:
@@ -530,10 +455,6 @@ func (m *MessageMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldPayload(ctx)
 	case message.FieldStatus:
 		return m.OldStatus(ctx)
-	case message.FieldAttempts:
-		return m.OldAttempts(ctx)
-	case message.FieldNextRetryAt:
-		return m.OldNextRetryAt(ctx)
 	case message.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case message.FieldUpdatedAt:
@@ -568,20 +489,6 @@ func (m *MessageMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetStatus(v)
 		return nil
-	case message.FieldAttempts:
-		v, ok := value.(int)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetAttempts(v)
-		return nil
-	case message.FieldNextRetryAt:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetNextRetryAt(v)
-		return nil
 	case message.FieldCreatedAt:
 		v, ok := value.(time.Time)
 		if !ok {
@@ -603,21 +510,13 @@ func (m *MessageMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *MessageMutation) AddedFields() []string {
-	var fields []string
-	if m.addattempts != nil {
-		fields = append(fields, message.FieldAttempts)
-	}
-	return fields
+	return nil
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *MessageMutation) AddedField(name string) (ent.Value, bool) {
-	switch name {
-	case message.FieldAttempts:
-		return m.AddedAttempts()
-	}
 	return nil, false
 }
 
@@ -626,13 +525,6 @@ func (m *MessageMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *MessageMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case message.FieldAttempts:
-		v, ok := value.(int)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddAttempts(v)
-		return nil
 	}
 	return fmt.Errorf("unknown Message numeric field %s", name)
 }
@@ -640,11 +532,7 @@ func (m *MessageMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *MessageMutation) ClearedFields() []string {
-	var fields []string
-	if m.FieldCleared(message.FieldNextRetryAt) {
-		fields = append(fields, message.FieldNextRetryAt)
-	}
-	return fields
+	return nil
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -657,11 +545,6 @@ func (m *MessageMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *MessageMutation) ClearField(name string) error {
-	switch name {
-	case message.FieldNextRetryAt:
-		m.ClearNextRetryAt()
-		return nil
-	}
 	return fmt.Errorf("unknown Message nullable field %s", name)
 }
 
@@ -678,12 +561,6 @@ func (m *MessageMutation) ResetField(name string) error {
 	case message.FieldStatus:
 		m.ResetStatus()
 		return nil
-	case message.FieldAttempts:
-		m.ResetAttempts()
-		return nil
-	case message.FieldNextRetryAt:
-		m.ResetNextRetryAt()
-		return nil
 	case message.FieldCreatedAt:
 		m.ResetCreatedAt()
 		return nil
@@ -696,19 +573,28 @@ func (m *MessageMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *MessageMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.retry != nil {
+		edges = append(edges, message.EdgeRetry)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *MessageMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case message.EdgeRetry:
+		if id := m.retry; id != nil {
+			return []ent.Value{*id}
+		}
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *MessageMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
 	return edges
 }
 
@@ -720,24 +606,762 @@ func (m *MessageMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *MessageMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedretry {
+		edges = append(edges, message.EdgeRetry)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *MessageMutation) EdgeCleared(name string) bool {
+	switch name {
+	case message.EdgeRetry:
+		return m.clearedretry
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *MessageMutation) ClearEdge(name string) error {
+	switch name {
+	case message.EdgeRetry:
+		m.ClearRetry()
+		return nil
+	}
 	return fmt.Errorf("unknown Message unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *MessageMutation) ResetEdge(name string) error {
+	switch name {
+	case message.EdgeRetry:
+		m.ResetRetry()
+		return nil
+	}
 	return fmt.Errorf("unknown Message edge %s", name)
+}
+
+// RetryMutation represents an operation that mutates the Retry nodes in the graph.
+type RetryMutation struct {
+	config
+	op             Op
+	typ            string
+	id             *int
+	status         *retry.Status
+	attempts       *int
+	addattempts    *int
+	next_retry_at  *time.Time
+	created_at     *time.Time
+	updated_at     *time.Time
+	clearedFields  map[string]struct{}
+	message        *uuid.UUID
+	clearedmessage bool
+	done           bool
+	oldValue       func(context.Context) (*Retry, error)
+	predicates     []predicate.Retry
+}
+
+var _ ent.Mutation = (*RetryMutation)(nil)
+
+// retryOption allows management of the mutation configuration using functional options.
+type retryOption func(*RetryMutation)
+
+// newRetryMutation creates new mutation for the Retry entity.
+func newRetryMutation(c config, op Op, opts ...retryOption) *RetryMutation {
+	m := &RetryMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeRetry,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withRetryID sets the ID field of the mutation.
+func withRetryID(id int) retryOption {
+	return func(m *RetryMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Retry
+		)
+		m.oldValue = func(ctx context.Context) (*Retry, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Retry.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withRetry sets the old Retry of the mutation.
+func withRetry(node *Retry) retryOption {
+	return func(m *RetryMutation) {
+		m.oldValue = func(context.Context) (*Retry, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m RetryMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m RetryMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *RetryMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *RetryMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Retry.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetMessageUUID sets the "message_uuid" field.
+func (m *RetryMutation) SetMessageUUID(u uuid.UUID) {
+	m.message = &u
+}
+
+// MessageUUID returns the value of the "message_uuid" field in the mutation.
+func (m *RetryMutation) MessageUUID() (r uuid.UUID, exists bool) {
+	v := m.message
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMessageUUID returns the old "message_uuid" field's value of the Retry entity.
+// If the Retry object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RetryMutation) OldMessageUUID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMessageUUID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMessageUUID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMessageUUID: %w", err)
+	}
+	return oldValue.MessageUUID, nil
+}
+
+// ResetMessageUUID resets all changes to the "message_uuid" field.
+func (m *RetryMutation) ResetMessageUUID() {
+	m.message = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *RetryMutation) SetStatus(r retry.Status) {
+	m.status = &r
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *RetryMutation) Status() (r retry.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the Retry entity.
+// If the Retry object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RetryMutation) OldStatus(ctx context.Context) (v retry.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *RetryMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetAttempts sets the "attempts" field.
+func (m *RetryMutation) SetAttempts(i int) {
+	m.attempts = &i
+	m.addattempts = nil
+}
+
+// Attempts returns the value of the "attempts" field in the mutation.
+func (m *RetryMutation) Attempts() (r int, exists bool) {
+	v := m.attempts
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAttempts returns the old "attempts" field's value of the Retry entity.
+// If the Retry object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RetryMutation) OldAttempts(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAttempts is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAttempts requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAttempts: %w", err)
+	}
+	return oldValue.Attempts, nil
+}
+
+// AddAttempts adds i to the "attempts" field.
+func (m *RetryMutation) AddAttempts(i int) {
+	if m.addattempts != nil {
+		*m.addattempts += i
+	} else {
+		m.addattempts = &i
+	}
+}
+
+// AddedAttempts returns the value that was added to the "attempts" field in this mutation.
+func (m *RetryMutation) AddedAttempts() (r int, exists bool) {
+	v := m.addattempts
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetAttempts resets all changes to the "attempts" field.
+func (m *RetryMutation) ResetAttempts() {
+	m.attempts = nil
+	m.addattempts = nil
+}
+
+// SetNextRetryAt sets the "next_retry_at" field.
+func (m *RetryMutation) SetNextRetryAt(t time.Time) {
+	m.next_retry_at = &t
+}
+
+// NextRetryAt returns the value of the "next_retry_at" field in the mutation.
+func (m *RetryMutation) NextRetryAt() (r time.Time, exists bool) {
+	v := m.next_retry_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNextRetryAt returns the old "next_retry_at" field's value of the Retry entity.
+// If the Retry object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RetryMutation) OldNextRetryAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNextRetryAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNextRetryAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNextRetryAt: %w", err)
+	}
+	return oldValue.NextRetryAt, nil
+}
+
+// ClearNextRetryAt clears the value of the "next_retry_at" field.
+func (m *RetryMutation) ClearNextRetryAt() {
+	m.next_retry_at = nil
+	m.clearedFields[retry.FieldNextRetryAt] = struct{}{}
+}
+
+// NextRetryAtCleared returns if the "next_retry_at" field was cleared in this mutation.
+func (m *RetryMutation) NextRetryAtCleared() bool {
+	_, ok := m.clearedFields[retry.FieldNextRetryAt]
+	return ok
+}
+
+// ResetNextRetryAt resets all changes to the "next_retry_at" field.
+func (m *RetryMutation) ResetNextRetryAt() {
+	m.next_retry_at = nil
+	delete(m.clearedFields, retry.FieldNextRetryAt)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *RetryMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *RetryMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Retry entity.
+// If the Retry object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RetryMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *RetryMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *RetryMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *RetryMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Retry entity.
+// If the Retry object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RetryMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *RetryMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetMessageID sets the "message" edge to the Message entity by id.
+func (m *RetryMutation) SetMessageID(id uuid.UUID) {
+	m.message = &id
+}
+
+// ClearMessage clears the "message" edge to the Message entity.
+func (m *RetryMutation) ClearMessage() {
+	m.clearedmessage = true
+	m.clearedFields[retry.FieldMessageUUID] = struct{}{}
+}
+
+// MessageCleared reports if the "message" edge to the Message entity was cleared.
+func (m *RetryMutation) MessageCleared() bool {
+	return m.clearedmessage
+}
+
+// MessageID returns the "message" edge ID in the mutation.
+func (m *RetryMutation) MessageID() (id uuid.UUID, exists bool) {
+	if m.message != nil {
+		return *m.message, true
+	}
+	return
+}
+
+// MessageIDs returns the "message" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// MessageID instead. It exists only for internal usage by the builders.
+func (m *RetryMutation) MessageIDs() (ids []uuid.UUID) {
+	if id := m.message; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetMessage resets all changes to the "message" edge.
+func (m *RetryMutation) ResetMessage() {
+	m.message = nil
+	m.clearedmessage = false
+}
+
+// Where appends a list predicates to the RetryMutation builder.
+func (m *RetryMutation) Where(ps ...predicate.Retry) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the RetryMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *RetryMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Retry, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *RetryMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *RetryMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Retry).
+func (m *RetryMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *RetryMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.message != nil {
+		fields = append(fields, retry.FieldMessageUUID)
+	}
+	if m.status != nil {
+		fields = append(fields, retry.FieldStatus)
+	}
+	if m.attempts != nil {
+		fields = append(fields, retry.FieldAttempts)
+	}
+	if m.next_retry_at != nil {
+		fields = append(fields, retry.FieldNextRetryAt)
+	}
+	if m.created_at != nil {
+		fields = append(fields, retry.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, retry.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *RetryMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case retry.FieldMessageUUID:
+		return m.MessageUUID()
+	case retry.FieldStatus:
+		return m.Status()
+	case retry.FieldAttempts:
+		return m.Attempts()
+	case retry.FieldNextRetryAt:
+		return m.NextRetryAt()
+	case retry.FieldCreatedAt:
+		return m.CreatedAt()
+	case retry.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *RetryMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case retry.FieldMessageUUID:
+		return m.OldMessageUUID(ctx)
+	case retry.FieldStatus:
+		return m.OldStatus(ctx)
+	case retry.FieldAttempts:
+		return m.OldAttempts(ctx)
+	case retry.FieldNextRetryAt:
+		return m.OldNextRetryAt(ctx)
+	case retry.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case retry.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown Retry field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RetryMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case retry.FieldMessageUUID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMessageUUID(v)
+		return nil
+	case retry.FieldStatus:
+		v, ok := value.(retry.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case retry.FieldAttempts:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAttempts(v)
+		return nil
+	case retry.FieldNextRetryAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNextRetryAt(v)
+		return nil
+	case retry.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case retry.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Retry field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *RetryMutation) AddedFields() []string {
+	var fields []string
+	if m.addattempts != nil {
+		fields = append(fields, retry.FieldAttempts)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *RetryMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case retry.FieldAttempts:
+		return m.AddedAttempts()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RetryMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case retry.FieldAttempts:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAttempts(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Retry numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *RetryMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(retry.FieldNextRetryAt) {
+		fields = append(fields, retry.FieldNextRetryAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *RetryMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *RetryMutation) ClearField(name string) error {
+	switch name {
+	case retry.FieldNextRetryAt:
+		m.ClearNextRetryAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Retry nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *RetryMutation) ResetField(name string) error {
+	switch name {
+	case retry.FieldMessageUUID:
+		m.ResetMessageUUID()
+		return nil
+	case retry.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case retry.FieldAttempts:
+		m.ResetAttempts()
+		return nil
+	case retry.FieldNextRetryAt:
+		m.ResetNextRetryAt()
+		return nil
+	case retry.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case retry.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Retry field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *RetryMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.message != nil {
+		edges = append(edges, retry.EdgeMessage)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *RetryMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case retry.EdgeMessage:
+		if id := m.message; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *RetryMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *RetryMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *RetryMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedmessage {
+		edges = append(edges, retry.EdgeMessage)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *RetryMutation) EdgeCleared(name string) bool {
+	switch name {
+	case retry.EdgeMessage:
+		return m.clearedmessage
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *RetryMutation) ClearEdge(name string) error {
+	switch name {
+	case retry.EdgeMessage:
+		m.ClearMessage()
+		return nil
+	}
+	return fmt.Errorf("unknown Retry unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *RetryMutation) ResetEdge(name string) error {
+	switch name {
+	case retry.EdgeMessage:
+		m.ResetMessage()
+		return nil
+	}
+	return fmt.Errorf("unknown Retry edge %s", name)
 }

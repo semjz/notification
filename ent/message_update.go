@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"notification/ent/message"
 	"notification/ent/predicate"
+	"notification/ent/retry"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -62,47 +63,6 @@ func (mu *MessageUpdate) SetNillableStatus(m *message.Status) *MessageUpdate {
 	return mu
 }
 
-// SetAttempts sets the "attempts" field.
-func (mu *MessageUpdate) SetAttempts(i int) *MessageUpdate {
-	mu.mutation.ResetAttempts()
-	mu.mutation.SetAttempts(i)
-	return mu
-}
-
-// SetNillableAttempts sets the "attempts" field if the given value is not nil.
-func (mu *MessageUpdate) SetNillableAttempts(i *int) *MessageUpdate {
-	if i != nil {
-		mu.SetAttempts(*i)
-	}
-	return mu
-}
-
-// AddAttempts adds i to the "attempts" field.
-func (mu *MessageUpdate) AddAttempts(i int) *MessageUpdate {
-	mu.mutation.AddAttempts(i)
-	return mu
-}
-
-// SetNextRetryAt sets the "next_retry_at" field.
-func (mu *MessageUpdate) SetNextRetryAt(t time.Time) *MessageUpdate {
-	mu.mutation.SetNextRetryAt(t)
-	return mu
-}
-
-// SetNillableNextRetryAt sets the "next_retry_at" field if the given value is not nil.
-func (mu *MessageUpdate) SetNillableNextRetryAt(t *time.Time) *MessageUpdate {
-	if t != nil {
-		mu.SetNextRetryAt(*t)
-	}
-	return mu
-}
-
-// ClearNextRetryAt clears the value of the "next_retry_at" field.
-func (mu *MessageUpdate) ClearNextRetryAt() *MessageUpdate {
-	mu.mutation.ClearNextRetryAt()
-	return mu
-}
-
 // SetCreatedAt sets the "created_at" field.
 func (mu *MessageUpdate) SetCreatedAt(t time.Time) *MessageUpdate {
 	mu.mutation.SetCreatedAt(t)
@@ -123,9 +83,34 @@ func (mu *MessageUpdate) SetUpdatedAt(t time.Time) *MessageUpdate {
 	return mu
 }
 
+// SetRetryID sets the "retry" edge to the Retry entity by ID.
+func (mu *MessageUpdate) SetRetryID(id int) *MessageUpdate {
+	mu.mutation.SetRetryID(id)
+	return mu
+}
+
+// SetNillableRetryID sets the "retry" edge to the Retry entity by ID if the given value is not nil.
+func (mu *MessageUpdate) SetNillableRetryID(id *int) *MessageUpdate {
+	if id != nil {
+		mu = mu.SetRetryID(*id)
+	}
+	return mu
+}
+
+// SetRetry sets the "retry" edge to the Retry entity.
+func (mu *MessageUpdate) SetRetry(r *Retry) *MessageUpdate {
+	return mu.SetRetryID(r.ID)
+}
+
 // Mutation returns the MessageMutation object of the builder.
 func (mu *MessageUpdate) Mutation() *MessageMutation {
 	return mu.mutation
+}
+
+// ClearRetry clears the "retry" edge to the Retry entity.
+func (mu *MessageUpdate) ClearRetry() *MessageUpdate {
+	mu.mutation.ClearRetry()
+	return mu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -200,23 +185,40 @@ func (mu *MessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := mu.mutation.Status(); ok {
 		_spec.SetField(message.FieldStatus, field.TypeEnum, value)
 	}
-	if value, ok := mu.mutation.Attempts(); ok {
-		_spec.SetField(message.FieldAttempts, field.TypeInt, value)
-	}
-	if value, ok := mu.mutation.AddedAttempts(); ok {
-		_spec.AddField(message.FieldAttempts, field.TypeInt, value)
-	}
-	if value, ok := mu.mutation.NextRetryAt(); ok {
-		_spec.SetField(message.FieldNextRetryAt, field.TypeTime, value)
-	}
-	if mu.mutation.NextRetryAtCleared() {
-		_spec.ClearField(message.FieldNextRetryAt, field.TypeTime)
-	}
 	if value, ok := mu.mutation.CreatedAt(); ok {
 		_spec.SetField(message.FieldCreatedAt, field.TypeTime, value)
 	}
 	if value, ok := mu.mutation.UpdatedAt(); ok {
 		_spec.SetField(message.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if mu.mutation.RetryCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   message.RetryTable,
+			Columns: []string{message.RetryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(retry.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := mu.mutation.RetryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   message.RetryTable,
+			Columns: []string{message.RetryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(retry.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, mu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -272,47 +274,6 @@ func (muo *MessageUpdateOne) SetNillableStatus(m *message.Status) *MessageUpdate
 	return muo
 }
 
-// SetAttempts sets the "attempts" field.
-func (muo *MessageUpdateOne) SetAttempts(i int) *MessageUpdateOne {
-	muo.mutation.ResetAttempts()
-	muo.mutation.SetAttempts(i)
-	return muo
-}
-
-// SetNillableAttempts sets the "attempts" field if the given value is not nil.
-func (muo *MessageUpdateOne) SetNillableAttempts(i *int) *MessageUpdateOne {
-	if i != nil {
-		muo.SetAttempts(*i)
-	}
-	return muo
-}
-
-// AddAttempts adds i to the "attempts" field.
-func (muo *MessageUpdateOne) AddAttempts(i int) *MessageUpdateOne {
-	muo.mutation.AddAttempts(i)
-	return muo
-}
-
-// SetNextRetryAt sets the "next_retry_at" field.
-func (muo *MessageUpdateOne) SetNextRetryAt(t time.Time) *MessageUpdateOne {
-	muo.mutation.SetNextRetryAt(t)
-	return muo
-}
-
-// SetNillableNextRetryAt sets the "next_retry_at" field if the given value is not nil.
-func (muo *MessageUpdateOne) SetNillableNextRetryAt(t *time.Time) *MessageUpdateOne {
-	if t != nil {
-		muo.SetNextRetryAt(*t)
-	}
-	return muo
-}
-
-// ClearNextRetryAt clears the value of the "next_retry_at" field.
-func (muo *MessageUpdateOne) ClearNextRetryAt() *MessageUpdateOne {
-	muo.mutation.ClearNextRetryAt()
-	return muo
-}
-
 // SetCreatedAt sets the "created_at" field.
 func (muo *MessageUpdateOne) SetCreatedAt(t time.Time) *MessageUpdateOne {
 	muo.mutation.SetCreatedAt(t)
@@ -333,9 +294,34 @@ func (muo *MessageUpdateOne) SetUpdatedAt(t time.Time) *MessageUpdateOne {
 	return muo
 }
 
+// SetRetryID sets the "retry" edge to the Retry entity by ID.
+func (muo *MessageUpdateOne) SetRetryID(id int) *MessageUpdateOne {
+	muo.mutation.SetRetryID(id)
+	return muo
+}
+
+// SetNillableRetryID sets the "retry" edge to the Retry entity by ID if the given value is not nil.
+func (muo *MessageUpdateOne) SetNillableRetryID(id *int) *MessageUpdateOne {
+	if id != nil {
+		muo = muo.SetRetryID(*id)
+	}
+	return muo
+}
+
+// SetRetry sets the "retry" edge to the Retry entity.
+func (muo *MessageUpdateOne) SetRetry(r *Retry) *MessageUpdateOne {
+	return muo.SetRetryID(r.ID)
+}
+
 // Mutation returns the MessageMutation object of the builder.
 func (muo *MessageUpdateOne) Mutation() *MessageMutation {
 	return muo.mutation
+}
+
+// ClearRetry clears the "retry" edge to the Retry entity.
+func (muo *MessageUpdateOne) ClearRetry() *MessageUpdateOne {
+	muo.mutation.ClearRetry()
+	return muo
 }
 
 // Where appends a list predicates to the MessageUpdate builder.
@@ -440,23 +426,40 @@ func (muo *MessageUpdateOne) sqlSave(ctx context.Context) (_node *Message, err e
 	if value, ok := muo.mutation.Status(); ok {
 		_spec.SetField(message.FieldStatus, field.TypeEnum, value)
 	}
-	if value, ok := muo.mutation.Attempts(); ok {
-		_spec.SetField(message.FieldAttempts, field.TypeInt, value)
-	}
-	if value, ok := muo.mutation.AddedAttempts(); ok {
-		_spec.AddField(message.FieldAttempts, field.TypeInt, value)
-	}
-	if value, ok := muo.mutation.NextRetryAt(); ok {
-		_spec.SetField(message.FieldNextRetryAt, field.TypeTime, value)
-	}
-	if muo.mutation.NextRetryAtCleared() {
-		_spec.ClearField(message.FieldNextRetryAt, field.TypeTime)
-	}
 	if value, ok := muo.mutation.CreatedAt(); ok {
 		_spec.SetField(message.FieldCreatedAt, field.TypeTime, value)
 	}
 	if value, ok := muo.mutation.UpdatedAt(); ok {
 		_spec.SetField(message.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if muo.mutation.RetryCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   message.RetryTable,
+			Columns: []string{message.RetryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(retry.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := muo.mutation.RetryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   message.RetryTable,
+			Columns: []string{message.RetryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(retry.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Message{config: muo.config}
 	_spec.Assign = _node.assignValues

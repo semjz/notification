@@ -2,7 +2,11 @@ package database
 
 import (
 	"context"
+	"fmt"
+	"github.com/google/uuid"
 	"log"
+	"notification/ent/migrate"
+	"notification/ent/retry"
 
 	"notification/ent"
 
@@ -14,10 +18,27 @@ func DBConnect() *ent.Client {
 	if err != nil {
 		log.Fatalf("failed opening connection to postgres: %v", err)
 	}
+
+	err = client.Schema.Create(context.Background(),
+		migrate.WithDropIndex(true),
+		migrate.WithDropColumn(true),
+	)
 	// Run the auto migration tool.
-	if err := client.Schema.Create(context.Background()); err != nil {
+	if err != nil {
 		log.Fatalf("failed creating schema resources: %v", err)
 	}
 
 	return client
+}
+
+func QueryRetry(ctx context.Context, client *ent.Client, uuid uuid.UUID) (*ent.Retry, error) {
+	u, err := client.Retry.
+		Query().
+		Where(retry.MessageUUID(uuid)).
+		Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed querying message: %w", err)
+	}
+	log.Println("message returned: ", u)
+	return u, nil
 }

@@ -1,2 +1,168 @@
 RABBITMQ ERROR: 2025/05/08 14:34:06 sender.go:31: Failed to declare a queue: Exception (406) Reason: "PRECONDITION_FAILED - inequivalent arg 'x-dead-letter-exchange' for queue 'task_queue' in vhost '/': received the value '' of type 'longstr' but current is none"
 RABBITMQ ERROR: 2025/05/08 14:35:45 sender.go:31: Failed to declare a queue: Exception (406) Reason: "PRECONDITION_FAILED - inequivalent arg 'x-dead-letter-exchange' for queue 'task_queue' in vhost '/': received the value '' of type 'longstr' but current is none"
+RABBITMQ ERROR: 2025/05/08 19:40:03 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/08 19:45:03 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/08 23:36:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/08 23:36:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/08 23:36:30 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/08 23:36:58 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/08 23:41:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/08 23:41:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/08 23:41:30 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/08 23:41:58 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/08 23:46:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/08 23:46:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/08 23:46:30 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/08 23:46:58 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/08 23:51:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/08 23:51:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/08 23:51:30 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/08 23:51:58 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/08 23:56:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/08 23:56:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/08 23:56:30 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/08 23:56:58 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:01:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:01:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:01:30 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:01:58 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:06:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:06:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:06:30 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:06:58 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:11:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:11:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:11:30 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:11:58 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:16:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:16:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:16:30 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:16:58 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:21:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:21:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:21:30 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:21:58 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:26:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:26:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:26:30 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:26:58 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:31:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:31:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:31:30 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:31:58 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:36:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:36:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:36:30 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 00:36:58 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 01:01:00 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 01:01:47 sender.go:29: Failed to send: EOF
+RABBITMQ ERROR: 2025/05/09 01:02:40 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 01:04:08 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 01:07:00 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 01:20:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 01:29:11 sender.go:29: Failed to send: EOF
+RABBITMQ ERROR: 2025/05/09 01:30:07 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 01:30:29 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 01:30:53 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 01:32:30 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 01:34:11 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 01:35:07 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 01:35:29 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 01:35:53 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 01:37:30 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 01:39:11 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 11:20:01 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 11:25:01 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 11:30:01 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 11:46:32 sender.go:29: Failed to declare a queue: Exception (406) Reason: "PRECONDITION_FAILED - inequivalent arg 'x-dead-letter-exchange' for queue 'task_queue' in vhost '/': received none but current is the value '' of type 'longstr'"
+RABBITMQ ERROR: 2025/05/09 11:46:38 sender.go:29: Failed to declare a queue: Exception (406) Reason: "PRECONDITION_FAILED - inequivalent arg 'x-dead-letter-exchange' for queue 'task_queue' in vhost '/': received none but current is the value '' of type 'longstr'"
+RABBITMQ ERROR: 2025/05/09 11:48:41 sender.go:29: Failed to declare a queue: Exception (406) Reason: "PRECONDITION_FAILED - inequivalent arg 'x-dead-letter-exchange' for queue 'task_queue' in vhost '/': received none but current is the value '' of type 'longstr'"
+RABBITMQ ERROR: 2025/05/09 11:50:39 sender.go:29: Failed to declare a queue: Exception (406) Reason: "PRECONDITION_FAILED - inequivalent arg 'x-dead-letter-exchange' for queue 'task_queue' in vhost '/': received none but current is the value '' of type 'longstr'"
+RABBITMQ ERROR: 2025/05/09 11:50:44 sender.go:29: Failed to declare a queue: Exception (406) Reason: "PRECONDITION_FAILED - inequivalent arg 'x-dead-letter-exchange' for queue 'task_queue' in vhost '/': received none but current is the value '' of type 'longstr'"
+RABBITMQ ERROR: 2025/05/09 11:51:32 sender.go:29: Failed to declare a queue: Exception (406) Reason: "PRECONDITION_FAILED - inequivalent arg 'x-dead-letter-exchange' for queue 'task_queue' in vhost '/': received none but current is the value '' of type 'longstr'"
+RABBITMQ ERROR: 2025/05/09 11:51:43 sender.go:29: Failed to declare a queue: Exception (406) Reason: "PRECONDITION_FAILED - inequivalent arg 'x-dead-letter-exchange' for queue 'task_queue' in vhost '/': received none but current is the value '' of type 'longstr'"
+RABBITMQ ERROR: 2025/05/09 11:51:46 sender.go:29: Failed to declare a queue: Exception (406) Reason: "PRECONDITION_FAILED - inequivalent arg 'x-dead-letter-exchange' for queue 'task_queue' in vhost '/': received none but current is the value '' of type 'longstr'"
+RABBITMQ ERROR: 2025/05/09 11:55:39 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 11:56:42 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 11:59:40 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 11:59:40 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:00:50 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:02:34 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:02:34 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:04:04 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:04:04 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:04:04 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:04:33 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:04:41 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:05:14 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:05:36 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:05:50 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:05:50 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:05:56 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:05:57 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:05:58 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:06:43 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:06:44 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:06:45 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:07:22 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:07:22 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:07:34 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:07:34 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:09:04 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:09:04 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:09:33 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:09:41 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:10:14 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:10:36 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:10:57 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:10:57 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:10:58 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:11:43 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:11:44 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:11:45 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:12:22 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:12:22 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:14:04 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:14:33 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:14:41 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:15:14 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:15:36 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:15:57 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:15:57 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:15:58 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:16:43 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:16:44 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:16:45 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:17:22 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:17:22 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:48:03 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 12:48:17 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 19:07:52 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 19:08:05 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 19:10:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 19:11:36 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 19:12:52 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 19:13:05 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 19:13:18 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 19:14:40 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 19:15:23 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 19:16:36 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 19:17:52 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 19:18:05 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 19:18:18 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 19:23:09 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 19:27:08 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 19:27:41 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 19:29:12 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 19:41:34 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 19:43:41 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 19:45:25 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 19:54:32 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 20:08:19 sender.go:29: Failed to send: dial tcp: lookup smtp.gmail.com: no such host
+RABBITMQ ERROR: 2025/05/09 20:09:19 sender.go:29: Failed to get notifier: no notifier for 
+RABBITMQ ERROR: 2025/05/09 20:21:39 sender.go:29: Failed to get notifier: no notifier for 
+RABBITMQ ERROR: 2025/05/09 20:40:55 sender.go:29: Failed to declare a queue: Exception (406) Reason: "PRECONDITION_FAILED - inequivalent arg 'x-dead-letter-exchange' for queue 'task_queue' in vhost '/': received none but current is the value '' of type 'longstr'"
+RABBITMQ ERROR: 2025/05/09 20:48:05 sender.go:29: Failed to declare a queue: Exception (406) Reason: "PRECONDITION_FAILED - inequivalent arg 'x-dead-letter-exchange' for queue 'task_queue' in vhost '/': received none but current is the value '' of type 'longstr'"
+RABBITMQ ERROR: 2025/05/09 20:48:40 sender.go:29: Failed to declare a queue: Exception (406) Reason: "PRECONDITION_FAILED - inequivalent arg 'x-dead-letter-exchange' for queue 'task_queue' in vhost '/': received none but current is the value '' of type 'longstr'"
+RABBITMQ ERROR: 2025/05/09 20:50:20 sender.go:29: Failed to declare a queue: Exception (406) Reason: "PRECONDITION_FAILED - inequivalent arg 'x-dead-letter-exchange' for queue 'task_queue' in vhost '/': received none but current is the value '' of type 'longstr'"
+RABBITMQ ERROR: 2025/05/09 20:53:09 sender.go:29: Failed to declare a queue: Exception (406) Reason: "PRECONDITION_FAILED - inequivalent arg 'x-dead-letter-exchange' for queue 'task_queue' in vhost '/': received none but current is the value '' of type 'longstr'"

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"notification/ent/message"
+	"notification/ent/retry"
 	"reflect"
 	"sync"
 
@@ -74,6 +75,7 @@ func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			message.Table: message.ValidColumn,
+			retry.Table:   retry.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

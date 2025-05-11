@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"notification/ent/message"
+	"notification/ent/retry"
 	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -43,34 +44,6 @@ func (mc *MessageCreate) SetStatus(m message.Status) *MessageCreate {
 func (mc *MessageCreate) SetNillableStatus(m *message.Status) *MessageCreate {
 	if m != nil {
 		mc.SetStatus(*m)
-	}
-	return mc
-}
-
-// SetAttempts sets the "attempts" field.
-func (mc *MessageCreate) SetAttempts(i int) *MessageCreate {
-	mc.mutation.SetAttempts(i)
-	return mc
-}
-
-// SetNillableAttempts sets the "attempts" field if the given value is not nil.
-func (mc *MessageCreate) SetNillableAttempts(i *int) *MessageCreate {
-	if i != nil {
-		mc.SetAttempts(*i)
-	}
-	return mc
-}
-
-// SetNextRetryAt sets the "next_retry_at" field.
-func (mc *MessageCreate) SetNextRetryAt(t time.Time) *MessageCreate {
-	mc.mutation.SetNextRetryAt(t)
-	return mc
-}
-
-// SetNillableNextRetryAt sets the "next_retry_at" field if the given value is not nil.
-func (mc *MessageCreate) SetNillableNextRetryAt(t *time.Time) *MessageCreate {
-	if t != nil {
-		mc.SetNextRetryAt(*t)
 	}
 	return mc
 }
@@ -117,6 +90,25 @@ func (mc *MessageCreate) SetNillableID(u *uuid.UUID) *MessageCreate {
 	return mc
 }
 
+// SetRetryID sets the "retry" edge to the Retry entity by ID.
+func (mc *MessageCreate) SetRetryID(id int) *MessageCreate {
+	mc.mutation.SetRetryID(id)
+	return mc
+}
+
+// SetNillableRetryID sets the "retry" edge to the Retry entity by ID if the given value is not nil.
+func (mc *MessageCreate) SetNillableRetryID(id *int) *MessageCreate {
+	if id != nil {
+		mc = mc.SetRetryID(*id)
+	}
+	return mc
+}
+
+// SetRetry sets the "retry" edge to the Retry entity.
+func (mc *MessageCreate) SetRetry(r *Retry) *MessageCreate {
+	return mc.SetRetryID(r.ID)
+}
+
 // Mutation returns the MessageMutation object of the builder.
 func (mc *MessageCreate) Mutation() *MessageMutation {
 	return mc.mutation
@@ -156,10 +148,6 @@ func (mc *MessageCreate) defaults() {
 		v := message.DefaultStatus
 		mc.mutation.SetStatus(v)
 	}
-	if _, ok := mc.mutation.Attempts(); !ok {
-		v := message.DefaultAttempts
-		mc.mutation.SetAttempts(v)
-	}
 	if _, ok := mc.mutation.CreatedAt(); !ok {
 		v := message.DefaultCreatedAt()
 		mc.mutation.SetCreatedAt(v)
@@ -194,9 +182,6 @@ func (mc *MessageCreate) check() error {
 		if err := message.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Message.status": %w`, err)}
 		}
-	}
-	if _, ok := mc.mutation.Attempts(); !ok {
-		return &ValidationError{Name: "attempts", err: errors.New(`ent: missing required field "Message.attempts"`)}
 	}
 	if _, ok := mc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Message.created_at"`)}
@@ -251,14 +236,6 @@ func (mc *MessageCreate) createSpec() (*Message, *sqlgraph.CreateSpec) {
 		_spec.SetField(message.FieldStatus, field.TypeEnum, value)
 		_node.Status = value
 	}
-	if value, ok := mc.mutation.Attempts(); ok {
-		_spec.SetField(message.FieldAttempts, field.TypeInt, value)
-		_node.Attempts = value
-	}
-	if value, ok := mc.mutation.NextRetryAt(); ok {
-		_spec.SetField(message.FieldNextRetryAt, field.TypeTime, value)
-		_node.NextRetryAt = &value
-	}
 	if value, ok := mc.mutation.CreatedAt(); ok {
 		_spec.SetField(message.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
@@ -266,6 +243,22 @@ func (mc *MessageCreate) createSpec() (*Message, *sqlgraph.CreateSpec) {
 	if value, ok := mc.mutation.UpdatedAt(); ok {
 		_spec.SetField(message.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if nodes := mc.mutation.RetryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   message.RetryTable,
+			Columns: []string{message.RetryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(retry.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

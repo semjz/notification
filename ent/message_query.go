@@ -4,10 +4,12 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 	"notification/ent/message"
 	"notification/ent/predicate"
+	"notification/ent/retry"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -23,6 +25,7 @@ type MessageQuery struct {
 	order      []message.OrderOption
 	inters     []Interceptor
 	predicates []predicate.Message
+	withRetry  *RetryQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -57,6 +60,28 @@ func (mq *MessageQuery) Unique(unique bool) *MessageQuery {
 func (mq *MessageQuery) Order(o ...message.OrderOption) *MessageQuery {
 	mq.order = append(mq.order, o...)
 	return mq
+}
+
+// QueryRetry chains the current query on the "retry" edge.
+func (mq *MessageQuery) QueryRetry() *RetryQuery {
+	query := (&RetryClient{config: mq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := mq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := mq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(message.Table, message.FieldID, selector),
+			sqlgraph.To(retry.Table, retry.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, message.RetryTable, message.RetryColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Message entity from the query.
@@ -251,10 +276,22 @@ func (mq *MessageQuery) Clone() *MessageQuery {
 		order:      append([]message.OrderOption{}, mq.order...),
 		inters:     append([]Interceptor{}, mq.inters...),
 		predicates: append([]predicate.Message{}, mq.predicates...),
+		withRetry:  mq.withRetry.Clone(),
 		// clone intermediate query.
 		sql:  mq.sql.Clone(),
 		path: mq.path,
 	}
+}
+
+// WithRetry tells the query-builder to eager-load the nodes that are connected to
+// the "retry" edge. The optional arguments are used to configure the query builder of the edge.
+func (mq *MessageQuery) WithRetry(opts ...func(*RetryQuery)) *MessageQuery {
+	query := (&RetryClient{config: mq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	mq.withRetry = query
+	return mq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -333,8 +370,11 @@ func (mq *MessageQuery) prepareQuery(ctx context.Context) error {
 
 func (mq *MessageQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Message, error) {
 	var (
-		nodes = []*Message{}
-		_spec = mq.querySpec()
+		nodes       = []*Message{}
+		_spec       = mq.querySpec()
+		loadedTypes = [1]bool{
+			mq.withRetry != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Message).scanValues(nil, columns)
@@ -342,6 +382,7 @@ func (mq *MessageQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Mess
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Message{config: mq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -353,7 +394,41 @@ func (mq *MessageQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Mess
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := mq.withRetry; query != nil {
+		if err := mq.loadRetry(ctx, query, nodes, nil,
+			func(n *Message, e *Retry) { n.Edges.Retry = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (mq *MessageQuery) loadRetry(ctx context.Context, query *RetryQuery, nodes []*Message, init func(*Message), assign func(*Message, *Retry)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Message)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(retry.FieldMessageUUID)
+	}
+	query.Where(predicate.Retry(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(message.RetryColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.MessageUUID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "message_uuid" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
 }
 
 func (mq *MessageQuery) sqlCount(ctx context.Context) (int, error) {

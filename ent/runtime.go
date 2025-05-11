@@ -4,6 +4,7 @@ package ent
 
 import (
 	"notification/ent/message"
+	"notification/ent/retry"
 	"notification/ent/schema"
 	"time"
 
@@ -20,16 +21,12 @@ func init() {
 	messageDescType := messageFields[1].Descriptor()
 	// message.TypeValidator is a validator for the "type" field. It is called by the builders before save.
 	message.TypeValidator = messageDescType.Validators[0].(func(string) error)
-	// messageDescAttempts is the schema descriptor for attempts field.
-	messageDescAttempts := messageFields[4].Descriptor()
-	// message.DefaultAttempts holds the default value on creation for the attempts field.
-	message.DefaultAttempts = messageDescAttempts.Default.(int)
 	// messageDescCreatedAt is the schema descriptor for created_at field.
-	messageDescCreatedAt := messageFields[6].Descriptor()
+	messageDescCreatedAt := messageFields[4].Descriptor()
 	// message.DefaultCreatedAt holds the default value on creation for the created_at field.
 	message.DefaultCreatedAt = messageDescCreatedAt.Default.(func() time.Time)
 	// messageDescUpdatedAt is the schema descriptor for updated_at field.
-	messageDescUpdatedAt := messageFields[7].Descriptor()
+	messageDescUpdatedAt := messageFields[5].Descriptor()
 	// message.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	message.DefaultUpdatedAt = messageDescUpdatedAt.Default.(func() time.Time)
 	// message.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -38,4 +35,20 @@ func init() {
 	messageDescID := messageFields[0].Descriptor()
 	// message.DefaultID holds the default value on creation for the id field.
 	message.DefaultID = messageDescID.Default.(func() uuid.UUID)
+	retryFields := schema.Retry{}.Fields()
+	_ = retryFields
+	// retryDescAttempts is the schema descriptor for attempts field.
+	retryDescAttempts := retryFields[2].Descriptor()
+	// retry.DefaultAttempts holds the default value on creation for the attempts field.
+	retry.DefaultAttempts = retryDescAttempts.Default.(int)
+	// retryDescCreatedAt is the schema descriptor for created_at field.
+	retryDescCreatedAt := retryFields[4].Descriptor()
+	// retry.DefaultCreatedAt holds the default value on creation for the created_at field.
+	retry.DefaultCreatedAt = retryDescCreatedAt.Default.(func() time.Time)
+	// retryDescUpdatedAt is the schema descriptor for updated_at field.
+	retryDescUpdatedAt := retryFields[5].Descriptor()
+	// retry.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	retry.DefaultUpdatedAt = retryDescUpdatedAt.Default.(func() time.Time)
+	// retry.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	retry.UpdateDefaultUpdatedAt = retryDescUpdatedAt.UpdateDefault.(func() time.Time)
 }
