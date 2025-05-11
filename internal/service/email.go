@@ -49,7 +49,7 @@ func (en *EmailNotifier) Send(payload notify.NotifyPayload) error {
 		return fmt.Errorf("payload does not support sender")
 	}
 	SMTPService := email.NewSMTPService(config.GetConfig())
-	err := SMTPService.SendMail(emailPayload.GetRecipient(), emailPayload.Subject, emailPayload.GetMessage())
+	err := SMTPService.SendMail(emailPayload.GetRecipient(), emailPayload.GetSubject(), emailPayload.GetMessage())
 	if err != nil {
 		return err
 	}
